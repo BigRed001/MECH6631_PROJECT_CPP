@@ -109,7 +109,7 @@ static void rgb_to_lab(float R255, float G255, float B255, float &L, float &a, f
     b = 200.0f * (fy - fz);
 }
 
-// Helper: draw filled circle into mask (add after rgb_to_lab function)
+// Helper: draw filled circle into mask
 static void draw_filled_circle_mask(image& mask, int cx, int cy, int r) {
     int W = mask.width, H = mask.height;
     for (int y = std::max(0, cy - r); y <= std::min(H-1, cy + r); ++y) {
@@ -260,7 +260,7 @@ std::vector<Obstacle> Obstacles::detect_floor_model(image& rgb,
         filtered.push_back(o);
     }
 
-    // Save debug images (keep these)
+    // Save debug images
     image dbg_rgb;
     dbg_rgb.type = RGB_IMAGE;
     dbg_rgb.width = W;
@@ -307,7 +307,7 @@ std::vector<Obstacle> Obstacles::detect_floor_model(image& rgb,
     return filtered;
 }
 
-// Wrapper: build robot_mask from robot_blobs and call detect_floor_model(...)
+// Wrapper: build robot_mask from robot_blobs
 std::vector<Obstacle> Obstacles::detect_floor_model(image& rgb,
                                                     const std::vector<Blob>& robot_blobs,
                                                     float kL, float ka, float kb,
@@ -320,7 +320,7 @@ std::vector<Obstacle> Obstacles::detect_floor_model(image& rgb,
     alloc_grey(robot_mask, W, H);
     std::memset(robot_mask.pdata, 0, W * H);
 
-    // mark robot pixels: estimate radius from blob area (fallback to fixed radius)
+    // mark robot pixels: estimate radius from blob area
     for (const auto &b : robot_blobs) {
         int r = 30; // fallback radius in px
         if (b.area > 0) {
