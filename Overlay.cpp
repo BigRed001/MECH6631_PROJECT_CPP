@@ -190,7 +190,7 @@ void draw_robot_mask_overlay(image& img, const RobotDet& det, int length_px, int
     double cos_t = std::cos(theta);
     double sin_t = std::sin(theta);
     
-    // ⭐ Match ObstaclePipeline coordinate system
+    // Match ObstaclePipeline coordinate system
     double hl = length_px / 2.0;  // half-length along robot's forward axis
     double hw = width_px / 2.0;   // half-width perpendicular to forward
     
