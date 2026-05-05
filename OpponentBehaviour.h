@@ -3,7 +3,6 @@
 #include "Types.h"
 #include <random>
 
-// Base class for opponent test behaviors
 class OpponentBehavior {
 public:
     virtual ~OpponentBehavior() = default;
@@ -55,14 +54,13 @@ public:
                      double alpha_max = M_PI / 2.0)
         : alpha_max_(alpha_max) {}
 
-    // Call this overload each frame from the main loop
     Command getCommandFull(
         double now, double x, double y, double theta,
         double target_x, double target_y,
         const Grid& grid, int cell_px, double ax_offset,
         int& pw_laser_out)
     {
-        // --- Drive toward target (your robot) ---
+        //Drive toward target
         double dx = target_x - x;
         double dy = target_y - y;
         double target_angle = std::atan2(dy, dx);
@@ -76,17 +74,17 @@ public:
         double left  = std::max(-1.0, std::min(1.0, forward_speed - turn_rate));
         double right = std::max(-1.0, std::min(1.0, forward_speed + turn_rate));
 
-        // --- Laser mount position ---
+        //Laser mount position
         double laser_x = x + ax_offset * std::cos(theta);
         double laser_y = y + ax_offset * std::sin(theta);
 
-        // --- Laser servo ---
+        //Laser servo
         double bearing    = std::atan2(target_y - laser_y, target_x - laser_x);
         double rel_angle  = std::fmod(bearing - theta + M_PI, 2.0 * M_PI) - M_PI;
         rel_angle         = std::max(-alpha_max_, std::min(alpha_max_, rel_angle));
         pw_laser_out      = 1500 + (int)(rel_angle / alpha_max_ * 500.0);
 
-        // --- LOS raycast ---
+        //LOS raycast
         bool los_clear = hasLOS(laser_x, laser_y, target_x, target_y, grid, cell_px);
         double dist    = std::hypot(laser_x - target_x, laser_y - target_y);
 
@@ -101,7 +99,7 @@ public:
         return Command{ left, right, fire };
     }
 
-    // Fallback for base interface (not used in TEST_DEFENSE)
+    // Fallback for base interface 
     Command getCommand(double, double, double, double) override {
         return Command{ 0.5, 0.5, false };
     }
