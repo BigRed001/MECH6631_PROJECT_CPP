@@ -62,7 +62,6 @@ void StrategyEngine::setRobotDimensions(double width, double length) {
     robot_length_ = length;
 }
 
-// Main update function
 Command StrategyEngine::update(image& rgb, double tc) {
     // Detect markers using configured profiles
     std::vector<Blob> front, rear;
