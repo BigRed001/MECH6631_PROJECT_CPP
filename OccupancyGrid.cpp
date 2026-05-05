@@ -99,14 +99,8 @@ Grid OccupancyGrid::build(
 {
     image mask;
     alloc_grey(mask, width, height);
-
-    // 1. Build raw obstacle mask
     build_mask(obs, mask);
-
-    // 2. Inflate obstacles
     inflate_mask(mask, inflate_px);
-
-    // 3. Convert to occupancy grid
     Grid grid = mask_to_grid(mask, cell_px);
 
     free_image(mask);
