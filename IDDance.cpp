@@ -57,11 +57,29 @@ int IDDance::run(
 {
     if (done_) return my_id_;
 
-    std::vector<Blob> front, rear;
-    detector.detect_markers(rgb, front, rear);
+    std::vector<RobotDet> dets;
 
-    std::optional<double> expected_sep;
-    auto dets = tracker.pairMarkers(front, rear, expected_sep, 0.55, 1200.0);
+    auto detect_one_profile = [&](ColorProfile profile) {
+        std::vector<Blob> front, rear;
+        switch (profile) {
+        case ColorProfile::BR:
+            detector.detect_markers(rgb, front, rear);
+            break;
+        case ColorProfile::GR:
+            detector.detect_markers_GR(rgb, front, rear);
+            break;
+        case ColorProfile::OB:
+            detector.detect_markers_OB(rgb, front, rear);
+            break;
+        }
+
+        auto expected_sep = estimate_marker_sep_px(front, rear);
+        auto profile_dets = tracker.pairMarkers(front, rear, expected_sep, 0.55, 1200.0);
+        dets.insert(dets.end(), profile_dets.begin(), profile_dets.end());
+    };
+
+    detect_one_profile(ColorProfile::GR);
+    detect_one_profile(ColorProfile::OB);
 
     tracks_ = tracker.updateTracks(tracks_, dets, now, 80.0, 10);
 
@@ -174,7 +192,7 @@ int IDDance::run(
                     my_id_ = best_id;
                     double avg_omega = robot_snapshots_[best_id].total_dtheta
                                      / robot_snapshots_[best_id].omega_samples;
-                    std::cout << "\n✅ Identified self as robot ID: " << my_id_
+                    std::cout << "\nIdentified self as robot ID: " << my_id_
                               << " (omega=" << avg_omega << " rad/s"
                               << ", error=" << std::fabs(avg_omega - commanded_omega_) << " rad/s)"
                               << std::endl;
@@ -188,12 +206,12 @@ int IDDance::run(
                             my_id_       = pair.first;
                         }
                     }
-                    std::cout << "\n⚠️ Insufficient omega samples, fell back to movement ID: "
+                    std::cout << "\nInsufficient omega samples, fell back to movement ID: "
                               << my_id_ << std::endl;
                 }
             } else {
                 my_id_ = (!tracks_.empty()) ? tracks_[0].id : 0;
-                std::cout << "\n⚠️ No snapshot data, using first track ID: " << my_id_ << std::endl;
+                std::cout << "\nNo snapshot data, using first track ID: " << my_id_ << std::endl;
             }
 
             done_  = true;
