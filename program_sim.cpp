@@ -40,10 +40,10 @@ using namespace std;
     // ============ Configuration ============
     
     // SELECT TEST MODE HERE:
-    TestMode test_mode = TEST_OFFENSE;  // ⭐ CHANGE THIS TO TEST DIFFERENT MODES
+    TestMode test_mode = TEST_OFFENSE;  
     
-    // ⭐ SELECT COLOR PROFILES HERE:
-    ColorProfile my_profile = ColorProfile::GR;       // Your robot
+    //SELECT COLOR PROFILES HERE:
+    ColorProfile my_profile = ColorProfile::GR;       // Our robot
     ColorProfile opponent_profile = ColorProfile::OB; // Opponent robot
 
     // Test duration (seconds)
@@ -148,8 +148,8 @@ using namespace std;
         strncpy_s(obstacle_files[i], "obstacle_black.bmp", S_MAX); // safe default
 
     // Override specific obstacles to test marker detector interference
-    strncpy_s(obstacle_files[0], "obstacle_red.bmp",    S_MAX);  // ⭐ tests red marker interference
-    strncpy_s(obstacle_files[1], "obstacle_blue.bmp",   S_MAX);  // ⭐ tests blue channel
+    strncpy_s(obstacle_files[0], "obstacle_red.bmp",    S_MAX);  // tests red marker interference
+    strncpy_s(obstacle_files[1], "obstacle_blue.bmp",   S_MAX);  // tests blue channel
     strncpy_s(obstacle_files[2], "obstacle_green.bmp",  S_MAX);
     strncpy_s(obstacle_files[3], "obstacle_orange.bmp", S_MAX);
 
@@ -323,7 +323,7 @@ using namespace std;
 
     // ============ Laser Parameters ============
     const double LASER_MAX_RANGE_PX    = 900.0;  // Max range to attempt shot (px)
-    const int    LASER_LOS_FRAMES_REQ  = 6;   // ⭐ ~0.75s at 8fps — tune this
+    const int    LASER_LOS_FRAMES_REQ  = 6;   // ~0.75s at 8fps — tune this
                                        // your actual fps ≈ frame_count / tc
     
     // ============ Main Loop ============
@@ -359,7 +359,7 @@ using namespace std;
 
         std::vector<Blob> front, rear;
 
-        // ⭐ Detect only the two declared profiles (efficient!)
+        // Detect only the two declared profiles (efficient!)
         detector.detect_two_profiles(rgb, my_profile, opponent_profile, front, rear);
 
         std::optional<double> expected_sep;
@@ -419,7 +419,7 @@ using namespace std;
                 double my_x, my_y, my_theta;
                 if (getTrackedRobotState(tracks, my_id, my_x, my_y, my_theta)) {
 
-                    // ⭐ Compute front-axle position first — used for planning AND control
+                    // Compute front-axle position first — used for planning AND control
                     double wheel_x, wheel_y;
                     getWheelCenterPosition(my_x, my_y, my_theta, wheel_x, wheel_y, Lx);
 
@@ -437,7 +437,7 @@ using namespace std;
                         }
                     }
 
-                    // ⭐ Aim at the opponent's RED (rear) marker — half sep behind centroid
+                    // Aim at the opponent's RED (rear) marker — half sep behind centroid
                     double red_x = opp_x - (opp_sep / 2.0) * cos(opp_theta_track);
                     double red_y = opp_y - (opp_sep / 2.0) * sin(opp_theta_track);
 
@@ -460,7 +460,7 @@ using namespace std;
                         return cell;
                     };
 
-                    // ⭐ Plan from front-axle position, not centroid
+                    // Plan from front-axle position, not centroid
                     auto raw_start = std::make_pair((int)(wheel_y / CELL_PX), (int)(wheel_x / CELL_PX));
                     auto start_cell = snap_to_free(grid_planning, raw_start);
                     auto raw_goal = std::make_pair((int)(red_y / CELL_PX), (int)(red_x / CELL_PX));
@@ -477,7 +477,7 @@ using namespace std;
                         ROBOT_COLLISION_WIDTH, ROBOT_COLLISION_LENGTH,
                         &grid_visual, CELL_PX, 0, 255, 255, 255, 0, 255);
                     DebugVisualizer::drawRobot(rgb, my_x, my_y, my_theta, 15, 255, 255, 0);
-                    // ⭐ Show front axle as orange dot (same as navigation mode)
+                    // Show front axle as orange dot (same as navigation mode)
                     DebugVisualizer::drawTarget(rgb, wheel_x, wheel_y, 15, 255, 128, 0);
                     DebugVisualizer::drawTarget(rgb, opp_x, opp_y, 20, 255, 0, 0);
                     DebugVisualizer::drawTarget(rgb, red_x, red_y, 20, 255, 0, 0);
@@ -505,7 +505,7 @@ using namespace std;
                         dy = waypoint_y - wheel_y;
                         heading_error = fmod(atan2(dy, dx) - my_theta + M_PI, 2*M_PI) - M_PI;
 
-                        // ⭐ follower.follow uses front-axle position
+                        // follower.follow uses front-axle position
                         Command cmd = follower.follow(
                             wheel_x, wheel_y, my_theta,
                             std::make_pair(waypoint_x, waypoint_y),
@@ -614,7 +614,7 @@ using namespace std;
                 auto result = defense_strategy.compute(
                     tracks, my_id, grid, grid_visual, CELL_PX,
                     LOOKAHEAD_CELLS, HIDING_SAMPLES, V_MAX,
-                    ROBOT_COLLISION_LENGTH / 2.0,   // ⭐ = 70px
+                    ROBOT_COLLISION_LENGTH / 2.0,   //  = 70px
                     obstacle_list
                 );
                 my_cmd = result.cmd;
@@ -824,7 +824,7 @@ using namespace std;
                         return cell;
                     };
 
-                    // ⭐ Plan from front-axle position, not centroid
+                    //  Plan from front-axle position, not centroid
                     auto raw_start = std::make_pair((int)(wheel_y / CELL_PX), (int)(wheel_x / CELL_PX));
                     auto start_cell = snap_to_free(grid_planning, raw_start);
                     auto raw_goal = std::make_pair((int)(goal_y / CELL_PX), (int)(goal_x / CELL_PX));
@@ -840,7 +840,7 @@ using namespace std;
                         ROBOT_COLLISION_WIDTH, ROBOT_COLLISION_LENGTH,
                         &grid_visual, CELL_PX, 0, 255, 255, 255, 0, 255);
                     DebugVisualizer::drawRobot(rgb, my_x, my_y, my_theta, 15, 255, 255, 0);
-                    // ⭐ Show front axle as orange dot (same as navigation mode)
+                    // Show front axle as orange dot (same as navigation mode)
                     DebugVisualizer::drawTarget(rgb, wheel_x, wheel_y, 15, 255, 128, 0);
                     DebugVisualizer::drawTarget(rgb, goal_x, goal_y, 30, 0, 255, 0);
 
@@ -866,7 +866,7 @@ using namespace std;
                         dy = waypoint_y - wheel_y;
                         heading_error = fmod(atan2(dy, dx) - my_theta + M_PI, 2*M_PI) - M_PI;
 
-                        // ⭐ follower.follow receives the front-axle position
+                        //  follower.follow receives the front-axle position
                         Command cmd = follower.follow(
                             wheel_x, wheel_y, my_theta,
                             std::make_pair(waypoint_x, waypoint_y),
@@ -914,7 +914,7 @@ using namespace std;
         set_inputs(pw_l, pw_r, pw_laser, laser,
             max_speed);
 
-        // ⭐ Freeze on the laser frame — acquire one more image so sim renders the beam
+        //  Freeze on the laser frame — acquire one more image so sim renders the beam
         if (freeze_on_laser) {
             acquire_image_sim(rgb);   // this frame has laser=1 → sim draws green beam
             view_rgb_image(rgb);
