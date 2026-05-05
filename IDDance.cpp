@@ -15,11 +15,9 @@ IDDance::IDDance()
     done_ = false;
     snapshots_initialized_ = false;
 
-	spin_time_ = 4.7; //This should be properly calibrated based on physical testing to achieve a clear angular velocity signature
+	spin_time_ = 4.7; 
     observe_time_ = 1.0;
 
-    // Expected angular velocity during spin (both wheels -0.8 → spinning in place)
-    // One full revolution in spin_time_ seconds
     commanded_omega_ = (2.0 * M_PI) / spin_time_;   // ~1.337 rad/s
 }
 
@@ -139,8 +137,8 @@ int IDDance::run(
                 double dt = now - snap.prev_time;
                 if (dt > 1e-4) {
                     double dtheta = wrap_angle(t.theta - snap.prev_theta);
-                    double omega  = dtheta / dt;           // rad/s (signed)
-                    snap.total_dtheta  += std::fabs(omega); // accumulate magnitude
+                    double omega  = dtheta / dt;           
+                    snap.total_dtheta  += std::fabs(omega);
                     snap.omega_samples++;
                 }
                 snap.prev_theta = t.theta;
@@ -174,7 +172,7 @@ int IDDance::run(
 
             if (!robot_snapshots_.empty()) {
                 int    best_id    = -1;
-                double best_score = 1e9;   // Lower = closer to commanded_omega_
+                double best_score = 1e9;  
 
                 for (const auto& pair : robot_snapshots_) {
                     if (pair.second.omega_samples < 10) continue;
