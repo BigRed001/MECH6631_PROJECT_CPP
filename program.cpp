@@ -225,7 +225,7 @@ int main()
     // ============================================================
     // Configuration
     // ============================================================
-    const char*  BT_PORT   = "COM5";   // ← Your Bluetooth COM port
+    const char*  BT_PORT   = "COM5";   //Bluetooth COM port
     const DWORD  BT_BAUD   = 9600;
     const int    CAM_INDEX = 0;        // Camera index (try 1 or 2 if 0 fails)
     const int    CAM_W     = 1920;
@@ -281,8 +281,8 @@ int main()
     
     // HSV ranges (tuned for physical environment)
     MarkerDetector detector;
-    detector.blue_range = {200.0, 240.0, 0.3, 50};   // Blue front marker
-    detector.red_range = {0.0, 20.0, 0.3, 50};       // Red rear marker
+    detector.blue_range = {200.0, 240.0, 0.3, 50};  
+    detector.red_range = {0.0, 20.0, 0.3, 50};       
     detector.min_blob_area = 2000;
     detector.max_blob_area = 10000;
     
@@ -396,7 +396,7 @@ int main()
     
     Sleep(1000);
     
-    // Path management (manual - WaypointFollower doesn't manage paths)
+    // Path management
     vector<pair<double, double>> path_pixels;
     size_t current_waypoint_idx = 0;
     bool path_planned = false;
@@ -718,9 +718,7 @@ int main()
         frame_count++;
     }
     
-    // ============================================================
-    // Cleanup
-    // ============================================================
+
     cout << "\nShutting down..." << endl;
     sendCommand(hSerial, {0.0, 0.0, false});
     
