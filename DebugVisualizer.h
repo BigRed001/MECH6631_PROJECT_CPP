@@ -12,7 +12,7 @@ public:
         image& rgb,
         const Grid& grid,
         int cell_px,
-        int alpha = 80  // Transparency: 0 (transparent) to 255 (opaque)
+        int alpha = 80 
     );
 
     // Draw A* path on RGB image
