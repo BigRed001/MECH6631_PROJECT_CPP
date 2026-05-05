@@ -108,7 +108,7 @@ DefenseStrategy::Result DefenseStrategy::compute(
     const RobotTrack* enemy = pick_nearest_enemy(tracks, my_id);
     if (!me || !enemy) return res;
 
-    // Enemy laser originates from their BLUE (front) marker
+    // Enemy laser originates from their front marker
     double laser_x = enemy->x + (enemy->sep_px * 0.5) * std::cos(enemy->theta);
     double laser_y = enemy->y + (enemy->sep_px * 0.5) * std::sin(enemy->theta);
 
@@ -160,14 +160,13 @@ DefenseStrategy::Result DefenseStrategy::compute(
 
             if (orbit_safe) {
                 res.cmd = follower_->follow(me->x, me->y, me->theta,
-                    { orbit_wx, orbit_wy }, 5.0, 2.0, 0.3, v_max * 0.5);  // ← raised from 0.2 to 0.5
+                    { orbit_wx, orbit_wy }, 5.0, 2.0, 0.3, v_max * 0.5);
             }
         }
         res.cmd.laser = false;
         return res;
     }
 
-    // If cached goal still hides red marker, reuse it without replanning
     std::optional<std::vector<std::pair<int,int>>> path;
 
     if (cached_goal_.has_value()) {
@@ -205,7 +204,7 @@ DefenseStrategy::Result DefenseStrategy::compute(
         }
     }
 
-    // Systematic search — laser-hidden candidates only (no fallback to exposed positions)
+    // Systematic search — laser-hidden candidates only
     if (!path || path->size() < 2) {
         auto sc = snap_to_free({ (int)(me->y/cell_px), (int)(me->x/cell_px) });
         double best_score = -1e9;
@@ -228,7 +227,7 @@ DefenseStrategy::Result DefenseStrategy::compute(
                 double red_cy = cand_y + sep_half * std::sin(bear);
                 bool hidden   = !has_los(grid_visual, cell_px, laser_x, laser_y, red_cx, red_cy);
 
-                // Only consider positions that actually hide the red marker from the laser
+                // Only consider positions that actually hide the rear marker from the laser
                 if (!hidden) continue;
 
                 double score = 300.0 - 0.15 * std::hypot(cand_x-me->x, cand_y-me->y);
@@ -273,11 +272,11 @@ DefenseStrategy::Result DefenseStrategy::compute(
     double to_wp_x = wx_pix - me->x, to_wp_y = wy_pix - me->y;
     double heading_err = std::fmod(std::atan2(to_wp_y, to_wp_x) - me->theta + M_PI, 2.0*M_PI) - M_PI;
 
-    // Allow reverse when near cover if heading is wrong or red marker is still exposed
+    // Allow reverse when near cover if heading is wrong or rear marker is still exposed
     bool use_reverse = near_hiding_point
                     && (std::fabs(heading_err) > M_PI/2.0 || red_exposed);
 
-    double effective_v = use_reverse ? std::min(v_scaled, v_max * 0.75) : v_scaled;  // raised from 0.55
+    double effective_v = use_reverse ? std::min(v_scaled, v_max * 0.75) : v_scaled;
 
     if (use_reverse) {
         res.cmd = follower_->follow(me->x, me->y, me->theta + M_PI,
