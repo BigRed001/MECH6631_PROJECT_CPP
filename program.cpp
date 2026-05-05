@@ -25,6 +25,7 @@
 #include "Waypoint.h"
 #include "Fuzzy.h"
 #include "IDDance.h"
+#include "ProgramVariant.h"
 
 using namespace std;
 
@@ -78,6 +79,138 @@ static void sendCommand(HANDLE hSerial, const Command& cmd)
 }
 
 // ============================================================
+// Program variant
+// ============================================================
+static const char* modeNameFromVariant()
+{
+    if (PROGRAM_MODE == MODE_OFFENSE) return "OFFENSE";
+    if (PROGRAM_MODE == MODE_DEFENSE) return "DEFENSE";
+    return "NAVIGATION";
+}
+
+static bool isOffenseModeFromVariant()
+{
+    return PROGRAM_MODE == MODE_OFFENSE;
+}
+
+static bool knownProfileEnabled()
+{
+    return PROGRAM_MY_PROFILE != PROFILE_AUTO;
+}
+
+static ColorProfile colorProfileFromVariant(int profile)
+{
+    if (profile == PROFILE_BR) return ColorProfile::BR;
+    if (profile == PROFILE_GR) return ColorProfile::GR;
+    if (profile == PROFILE_OB) return ColorProfile::OB;
+    return ColorProfile::GR; 
+}
+
+static const char* profileNameFromVariant(int profile)
+{
+    if (profile == PROFILE_BR) return "BR";
+    if (profile == PROFILE_GR) return "GR";
+    if (profile == PROFILE_OB) return "OB";
+    return "AUTO";
+}
+
+static void detectMarkersForProfile(MarkerDetector& detector,
+                                    image& rgb,
+                                    ColorProfile profile,
+                                    std::vector<Blob>& front,
+                                    std::vector<Blob>& rear)
+{
+    switch (profile) {
+    case ColorProfile::BR:
+        detector.detect_markers(rgb, front, rear);
+        break;
+    case ColorProfile::GR:
+        detector.detect_markers_GR(rgb, front, rear);
+        break;
+    case ColorProfile::OB:
+        detector.detect_markers_OB(rgb, front, rear);
+        break;
+    }
+}
+
+static std::vector<RobotDet> detectAndPairOneProfile(MarkerDetector& detector,
+                                                     Tracker& tracker,
+                                                     image& rgb,
+                                                     ColorProfile profile,
+                                                     double pair_tolerance,
+                                                     double pair_max_distance,
+                                                     std::optional<double>& sep_out)
+{
+    std::vector<Blob> front, rear;
+    detectMarkersForProfile(detector, rgb, profile, front, rear);
+    sep_out = estimate_marker_sep_px(front, rear);
+    return tracker.pairMarkers(front, rear, sep_out, pair_tolerance, pair_max_distance);
+}
+
+struct VariantDetectionResult {
+    std::vector<RobotDet> all_dets;
+    std::vector<RobotDet> own_profile_dets;
+    std::optional<double> sep_for_scale;
+};
+
+static VariantDetectionResult detectRobotsForVariant(MarkerDetector& detector,
+                                                     Tracker& tracker,
+                                                     image& rgb,
+                                                     double pair_tolerance,
+                                                     double pair_max_distance)
+{
+    VariantDetectionResult out;
+
+    std::vector<ColorProfile> profiles;
+#if PROGRAM_DETECT_BR_PROFILE
+    profiles.push_back(ColorProfile::BR);
+#endif
+    profiles.push_back(ColorProfile::GR);
+    profiles.push_back(ColorProfile::OB);
+
+    ColorProfile own_profile = colorProfileFromVariant(PROGRAM_MY_PROFILE);
+
+    for (ColorProfile p : profiles) {
+        std::optional<double> sep;
+        std::vector<RobotDet> dets = detectAndPairOneProfile(
+            detector, tracker, rgb, p, pair_tolerance, pair_max_distance, sep);
+
+        if (!out.sep_for_scale.has_value() && sep.has_value()) {
+            out.sep_for_scale = sep;
+        }
+
+        if (knownProfileEnabled() && p == own_profile) {
+            out.own_profile_dets.insert(out.own_profile_dets.end(), dets.begin(), dets.end());
+        }
+
+        out.all_dets.insert(out.all_dets.end(), dets.begin(), dets.end());
+    }
+
+    return out;
+}
+
+static int chooseTrackFromOwnProfileDetections(const std::vector<RobotTrack>& tracks,
+                                               const std::vector<RobotDet>& own_dets)
+{
+    if (tracks.empty() || own_dets.empty()) return -1;
+
+    int best_id = -1;
+    double best_d = 1.0e12;
+
+    for (const auto& tr : tracks) {
+        if (tr.misses >= 3) continue;
+        for (const auto& d : own_dets) {
+            double dd = std::hypot(tr.x - d.x, tr.y - d.y);
+            if (dd < best_d) {
+                best_d = dd;
+                best_id = tr.id;
+            }
+        }
+    }
+    return best_id;
+}
+
+// ============================================================
 // Main
 // ============================================================
 int main()
@@ -100,13 +233,11 @@ int main()
     const double TEST_DURATION = 120.0; // Auto-stop after seconds (0 = disabled)
     
     // Mode selection
-    cout << "\nSelect Mode:" << endl;
-    cout << "  1 - Navigation Mode (move to opposite corner)" << endl;
-    cout << "  2 - Offense Mode (track and shoot enemy robot)" << endl;
-    cout << "\nEnter mode (1 or 2): ";
-    int mode_choice;
-    cin >> mode_choice;
-    bool offense_mode = (mode_choice == 2);
+    bool offense_mode = isOffenseModeFromVariant();
+    cout << "\nProgram mode: " << modeNameFromVariant() << endl;
+    cout << "Robot profile: " << profileNameFromVariant(PROGRAM_MY_PROFILE) << endl;
+    cout << "ID dance: " << (PROGRAM_USE_ID_DANCE ? "enabled" : "disabled") << endl;
+    
     
     // ============================================================
     // Initialize Hardware
@@ -199,20 +330,17 @@ int main()
     cout << "Starting ID dance in 2 seconds..." << endl;
     Sleep(2000);
     
-    while (tc < ID_DANCE_DURATION && !id_assigned) {
+    while (PROGRAM_USE_ID_DANCE && tc < ID_DANCE_DURATION && !id_assigned) {
         tc = high_resolution_time() - tc0;
         
         // Grab frame from camera
         acquire_image(rgb, CAM_INDEX);
         
-        // Detect markers
+        // Detect all configured robot profiles during ID dance.
         double t_detect0 = high_resolution_time();
-        std::vector<Blob> front_blobs, rear_blobs;
-        detector.detect_markers(rgb, front_blobs, rear_blobs);
-        
-        auto est_sep = estimate_marker_sep_px(front_blobs, rear_blobs);
-        std::vector<RobotDet> dets = tracker.pairMarkers(front_blobs, rear_blobs, est_sep, pair_tolerance, pair_max_distance);
-        
+        VariantDetectionResult det_res = detectRobotsForVariant(detector, tracker, rgb, pair_tolerance, pair_max_distance);
+        std::vector<RobotDet> dets = det_res.all_dets;
+
         // Update tracking
         tracks = tracker.updateTracks(tracks, dets, tc, 80.0, 10);
         double detect_ms = (high_resolution_time() - t_detect0) * 1000.0;
@@ -306,8 +434,9 @@ int main()
         
         // Detect markers
         double t_detect0 = high_resolution_time();
-        std::vector<Blob> front_blobs, rear_blobs;
-        detector.detect_markers(rgb, front_blobs, rear_blobs);
+        VariantDetectionResult det_res = detectRobotsForVariant(detector, tracker, rgb, pair_tolerance, pair_max_distance);
+        std::vector<RobotDet> dets = det_res.all_dets;
+        auto est_sep = det_res.sep_for_scale;
         
         auto est_sep = estimate_marker_sep_px(front_blobs, rear_blobs);
         std::vector<RobotDet> dets = tracker.pairMarkers(front_blobs, rear_blobs, est_sep, pair_tolerance, pair_max_distance);
@@ -315,6 +444,16 @@ int main()
         // Update tracking
         tracks = tracker.updateTracks(tracks, dets, tc, 80.0, 10);
         double detect_ms = (high_resolution_time() - t_detect0) * 1000.0;
+
+        // For simple variants, identify our robot from the known color profile.
+        if (!PROGRAM_USE_ID_DANCE && my_id < 0 && knownProfileEnabled()) {
+            int candidate_id = chooseTrackFromOwnProfileDetections(tracks, det_res.own_profile_dets);
+            if (candidate_id >= 0) {
+                my_id = candidate_id;
+                cout << "Known-profile ID assigned: " << my_id
+                     << " (" << profileNameFromVariant(PROGRAM_MY_PROFILE) << ")" << endl;
+            }
+        }
         
         // Find my robot in tracking results
         RobotTrack* my_robot = nullptr;
