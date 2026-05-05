@@ -4,30 +4,23 @@
 #include <iostream>
 #include <algorithm>
 
-/*
- MarkerDetector.cpp - robust HSV segmentation and blob extraction.
- Keeps the original public API and restores compatibility with
- code that expects single-range fields (s_min, v_min).
-*/
-
-// Constructor: set reasonable defaults
 MarkerDetector::MarkerDetector()
 {
-    // primary single-range defaults (for backward compatibility)
+    // blue as single primary range
     blue_range.h_lo = 200.0;  blue_range.h_hi = 250.0;
     blue_range.s_min = 0.60; blue_range.v_min = 40;
 
-    // red as single primary range (also provide wrap-around via blue/red_ranges)
+    // red as single primary range
     red_range.h_lo = 0.0;    red_range.h_hi = 15.0;
     red_range.s_min = 0.35;  red_range.v_min = 60;
 
-    // populate vector ranges (useful for wrap-around red)
+    // populate vector ranges
     blue_ranges = { blue_range };
     red_ranges = { {0.0, 10.0, red_range.s_min, red_range.v_min}, {335.0, 360.0, red_range.s_min, red_range.v_min} };
 
     debug_dump_masks = true;
 
-    // Green range (for GR profile) - ⭐ Broad, relaxed thresholds
+    // Green range (for GR profile)
     green_ranges = { {90.0, 160.0, 0.20, 30} };  // Adjust as needed
 
     // Orange range (for BO profile)  
@@ -63,7 +56,7 @@ void MarkerDetector::rgb_to_hsv(ibyte R, ibyte G, ibyte B, double& h, double& s,
     if (h < 0.0) h += 360.0;
 }
 
-// check if hue (deg) falls inside any of the provided ranges (wrap-safe)
+// check if hue falls inside any of the provided ranges
 bool MarkerDetector::hue_in_ranges(double h, const std::vector<HSVRange>& ranges)
 {
     for (const auto &r : ranges) {
@@ -76,7 +69,7 @@ bool MarkerDetector::hue_in_ranges(double h, const std::vector<HSVRange>& ranges
     return false;
 }
 
-// Build binary mask: pixels that match ANY hue_range AND s>=s_min AND v>=v_min
+// Build binary mask
 void MarkerDetector::build_mask(image& rgb, image& mask_out, const std::vector<HSVRange>& hue_ranges, double s_min, int v_min)
 {
     int W = rgb.width;
@@ -102,8 +95,7 @@ void MarkerDetector::build_mask(image& rgb, image& mask_out, const std::vector<H
     }
 }
 
-// Morphological cleaning using existing erode/dialate primitives.
-// Emulate larger kernels by repeating operations.
+
 void MarkerDetector::clean_mask(image& mask, int open_iters, int close_iters, int repeat)
 {
     if (repeat <= 0) repeat = 1;
@@ -114,7 +106,7 @@ void MarkerDetector::clean_mask(image& mask, int open_iters, int close_iters, in
     allocate_image(tmp);
 
     for (int rep = 0; rep < repeat; ++rep) {
-        // Opening: erode (open_iters times) -> dilate (open_iters times)
+        
         for (int it = 0; it < open_iters; ++it) {
             erode(mask, tmp);
             copy(tmp, mask);
@@ -124,7 +116,7 @@ void MarkerDetector::clean_mask(image& mask, int open_iters, int close_iters, in
             copy(tmp, mask);
         }
 
-        // Closing: dilate (close_iters times) -> erode (closeiters times)
+        
         for (int it = 0; it < close_iters; ++it) {
             dialate(mask, tmp);
             copy(tmp, mask);
@@ -138,7 +130,7 @@ void MarkerDetector::clean_mask(image& mask, int open_iters, int close_iters, in
     free_image(tmp);
 }
 
-// Extract connected components and apply simple shape filters.
+// Extract connected components and apply simple shape filters
 void MarkerDetector::extract_blobs_filtered(image& mask, image& grey_for_centroid, std::vector<Blob>& out_blobs)
 {
     out_blobs.clear();
@@ -192,7 +184,7 @@ void MarkerDetector::extract_blobs_filtered(image& mask, image& grey_for_centroi
     free_image(label);
 }
 
-// Public API: detect_markers (keeps compatibility with existing callers)
+// Public API: detect_markers
 void MarkerDetector::detect_markers(
     image& rgb,
     std::vector<Blob>& front_blobs,
@@ -219,7 +211,6 @@ void MarkerDetector::detect_markers(
     copy(rgb, grey);
 
     // Build masks:
-    // Prefer vector ranges if provided; otherwise use single-range legacy members.
     const std::vector<HSVRange>* blue_src = &blue_ranges;
     const std::vector<HSVRange>* red_src  = &red_ranges;
 
@@ -229,11 +220,11 @@ void MarkerDetector::detect_markers(
         blue_src = &blue_ranges;
     }
     if (red_src->empty()) {
-        red_ranges = { red_range, red_range }; // ensure not empty; second entry may be adjusted by user
+        red_ranges = { red_range, red_range }; // ensure not empty; second entry may be adjusted
         red_src = &red_ranges;
     }
 
-    // Use per-range s_min/v_min from the first range (legacy behavior)
+    // Use per-range s_min/v_min from the first range
     double blue_smin = (*blue_src)[0].s_min;
     int    blue_vmin = (int)(*blue_src)[0].v_min;
     double red_smin  = (*red_src)[0].s_min;
@@ -287,9 +278,7 @@ void MarkerDetector::detect_markers(
     free_image(bin_red);
 }
 
-// ============================================================================
 // detect_markers_GR: Green front, Red rear
-// ============================================================================
 void MarkerDetector::detect_markers_GR(
     image& rgb,
     std::vector<Blob>& front_blobs,
@@ -316,13 +305,11 @@ void MarkerDetector::detect_markers_GR(
     allocate_image(grey);
     copy(rgb, grey);
 
-    // ⭐ FIX: Use thresholds FROM the ranges, not hardcoded values!
     double green_smin = green_ranges[0].s_min;
     int    green_vmin = green_ranges[0].v_min;
     double red_smin   = red_ranges[0].s_min;
     int    red_vmin   = red_ranges[0].v_min;
 
-    // Build masks using proper thresholds
     build_mask(rgb, bin_green, green_ranges, green_smin, green_vmin);
     build_mask(rgb, bin_red,   red_ranges,   red_smin,   red_vmin);
 
@@ -340,9 +327,7 @@ void MarkerDetector::detect_markers_GR(
     free_image(grey);
 }
 
-// ============================================================================
 // detect_markers_OB: Orange front, Blue rear
-// ============================================================================
 void MarkerDetector::detect_markers_OB(
     image& rgb,
     std::vector<Blob>& front_blobs,
@@ -369,13 +354,12 @@ void MarkerDetector::detect_markers_OB(
     allocate_image(grey);
     copy(rgb, grey);
 
-    // ⭐ FIX: Use thresholds FROM the ranges
     double orange_smin = orange_ranges[0].s_min;
     int    orange_vmin = orange_ranges[0].v_min;
     double blue_smin   = blue_ranges[0].s_min;
     int    blue_vmin   = blue_ranges[0].v_min;
 
-    // Build masks using proper thresholds
+    // Build masks
     build_mask(rgb, bin_orange, orange_ranges, orange_smin, orange_vmin);
     build_mask(rgb, bin_blue,   blue_ranges,   blue_smin,   blue_vmin);
 
@@ -418,7 +402,7 @@ void MarkerDetector::detect_two_profiles(
             break;
     }
 
-    // Detect profile 2 (only if different from profile 1)
+    // Detect profile 2
     if (profile1 != profile2) {
         switch (profile2) {
             case ColorProfile::BR:
