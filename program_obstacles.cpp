@@ -115,7 +115,7 @@
             draw_obstacle_overlay(rgb, obs, 255, 128, 0);
         }
         
-        // 🆕 Draw robot masks (semi-transparent yellow/white outline)
+        // Draw robot masks (semi-transparent yellow/white outline)
         for (auto& d : dets) {
             draw_robot_mask_overlay(rgb, d, robot_length_px, robot_width_px, 255, 255, 100);
         }
