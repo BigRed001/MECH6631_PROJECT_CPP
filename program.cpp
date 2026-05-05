@@ -354,7 +354,7 @@ int main()
         if (id_dance.done()) {
             my_id = id_dance.my_id();
             id_assigned = true;
-            cout << "\n✓ ID Assigned: " << my_id << endl;
+            cout << "\nID Assigned: " << my_id << endl;
         }
         
         // Visualization
@@ -438,9 +438,6 @@ int main()
         std::vector<RobotDet> dets = det_res.all_dets;
         auto est_sep = det_res.sep_for_scale;
         
-        auto est_sep = estimate_marker_sep_px(front_blobs, rear_blobs);
-        std::vector<RobotDet> dets = tracker.pairMarkers(front_blobs, rear_blobs, est_sep, pair_tolerance, pair_max_distance);
-        
         // Update tracking
         tracks = tracker.updateTracks(tracks, dets, tc, 80.0, 10);
         double detect_ms = (high_resolution_time() - t_detect0) * 1000.0;
@@ -481,6 +478,7 @@ int main()
         }
         
         // Obstacle detection
+        double t_obs0 = high_resolution_time();
         ObstaclePipelineResult pipeline_res = process_frame_obstacles(
             rgb, dets, obst, occBuilder,
             kL, ka, kb,
