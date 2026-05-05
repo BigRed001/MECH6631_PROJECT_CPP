@@ -18,7 +18,7 @@ using namespace std;
 #include "Tracking.h"
 #include "IDDance.h"
 #include "Types.h"
-#include "Overlay.h"  // ⭐ Use your existing drawing functions!
+#include "Overlay.h"  
 
 #define KEY(c) ( GetAsyncKeyState((int)(c)) & (SHORT)0x8000 )
 
@@ -56,7 +56,7 @@ using namespace std;
     Ay = 0.0;          // axis of rotation y
     alpha_max = 3.14159 / 2;  // max laser angle (rad)
 
-    // ✅ TWO ROBOTS for this test
+    // TWO ROBOTS for this test
     n_robot = 2;
 
     // ============ Activate Libraries ============
@@ -163,8 +163,8 @@ using namespace std;
         // ============ Detect Markers ============
         std::vector<Blob> front_blobs, rear_blobs;
 
-        // ⭐ Robot A: Green front, Red rear
-        // ⭐ Robot B: Orange front, Blue rear
+        // Robot A: Green front, Red rear
+        // Robot B: Orange front, Blue rear
         detector.detect_two_profiles(
             rgb,
             ColorProfile::GR,     // Robot A (left): Green front, Red rear
@@ -173,14 +173,14 @@ using namespace std;
             rear_blobs            // Combined: Red + Blue
         );
         
-        // ⭐ PAIR markers into robot detections (this was missing!)
+        // PAIR markers into robot detections (this was missing!)
         std::optional<double> expected_sep;
         auto detections = tracker.pairMarkers(front_blobs, rear_blobs, expected_sep, 0.55, 1200.0);
 
         // Update tracks with paired detections
         tracks = tracker.updateTracks(tracks, detections, tc, 80.0, 10);
 
-        // ============ 🎨 DEBUG VISUALIZATION (Using Overlay.h) ============
+        // ============  DEBUG VISUALIZATION (Using Overlay.h) ============
         
         // Draw detected FRONT markers (Green + Orange → show as CYAN for visibility)
         for (const auto& blob : front_blobs) {
@@ -221,7 +221,7 @@ using namespace std;
 
         set_inputs(pw_l, pw_r, pw_laser, laser, max_speed);
 
-        // ============ 📊 DEBUG OUTPUT ============
+        // ============ DEBUG OUTPUT ============
 
         if (frame_count % 20 == 0) {
             cout << "\n--- Frame " << frame_count << " (t=" << tc << "s) ---" << endl;
