@@ -4,16 +4,10 @@
 #include "Types.h"
 #include <vector>
 
-/*
- MarkerDetector - robust HSV-based marker segmentation using existing
- vision primitives (no OpenCV). Public API kept for compatibility.
-*/
-
-// ⭐ Updated enum with GR and OB profiles
 enum class ColorProfile {
-    BR,  // Blue front, Red rear (default)
-    GR,  // Green front, Red rear ← NEW
-    OB   // Orange front, Blue rear ← NEW
+    BR,  // Blue front, Red rear
+    GR,  // Green front, Red rear
+    OB   // Orange front, Blue rear 
 };
 
 // HSV range with saturation/value thresholds included for compatibility
@@ -33,7 +27,7 @@ public:
     HSVRange blue_range;   // primary blue range
     HSVRange red_range;    // primary red range
 
-    // Newer API: allow multiple hue ranges per color (e.g. red wraps)
+    // Allow multiple hue ranges per color 
     std::vector<HSVRange> blue_ranges;
     std::vector<HSVRange> red_ranges;
 
@@ -41,19 +35,19 @@ public:
     std::vector<HSVRange> green_ranges;
     std::vector<HSVRange> orange_ranges;
 
-    // Morphology and filtering params (public for tuning)
+    // Morphology and filtering params
     int morph_iters_open = 1;
-    int morph_iters_close = 1;     // REDUCE closing to 1 (was 2)
+    int morph_iters_close = 1;    
     int morph_repeat = 1;
 
     int min_blob_area = 4000;        
-    int max_blob_area = 20000;     // INCREASED to handle large markers
-    double min_area_ratio = 0.05;     // MUCH more lenient shape filter
+    int max_blob_area = 20000;     
+    double min_area_ratio = 0.05;  
 
     // Debug flag
     bool debug_dump_masks = false;
 
-    // Main detection function (keeps original signature)
+    // Main detection function 
     void detect_markers(
         image& rgb,
         std::vector<Blob>& front_blobs,   // BLUE
