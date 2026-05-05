@@ -16,7 +16,7 @@ void DebugVisualizer::blendPixel(image& rgb, int x, int y, int R, int G, int B, 
     
     ibyte* p = rgb.pdata + 3 * (y * rgb.width + x);
     
-    // Alpha blend: new = alpha * overlay + (1 - alpha) * existing
+    
     double a = alpha / 255.0;
     p[0] = (ibyte)(a * B + (1.0 - a) * p[0]);  // B
     p[1] = (ibyte)(a * G + (1.0 - a) * p[1]);  // G
