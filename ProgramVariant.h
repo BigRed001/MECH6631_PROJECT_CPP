@@ -20,9 +20,9 @@
 // ============================================================
 // TUNE FOR EACH SUBMISSION FOLDER
 // ============================================================
-#define PROGRAM_MODE MODE_OFFENSE
-#define PROGRAM_MY_PROFILE PROFILE_AUTO
-#define PROGRAM_USE_ID_DANCE 1
+#define PROGRAM_MODE MODE_DEFENSE
+#define PROGRAM_MY_PROFILE PROFILE_GR
+#define PROGRAM_USE_ID_DANCE 0
 
 
 
