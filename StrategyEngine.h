@@ -42,12 +42,12 @@ private:
     int arena_width_ = 1920;
     int arena_height_ = 1080;
     double max_speed_ = 100.0;
-    double v_max_ = 1.0;  // ⭐ Normalized velocity max
+    double v_max_ = 1.0;  
     int cell_px_ = 20;
     double robot_width_ = 90.0;
     double robot_length_ = 140.0;
     
-    bool offense_mode_ = true;  // ⭐ Derived from strategy_mode_
+    bool offense_mode_ = true; 
     
     // Vision and tracking
     MarkerDetector detector_;
