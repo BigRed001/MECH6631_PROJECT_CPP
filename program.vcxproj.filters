@@ -28,6 +28,9 @@
     <Filter Include="Shared Types">
       <UniqueIdentifier>{a1b2c3d4-0009-0009-0009-000000000009}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Diagnostic">
+      <UniqueIdentifier>{cc2e3601-9f1f-4b7e-9811-c11f97c0f984}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vision.cpp">
@@ -182,10 +185,18 @@
     <ClInclude Include="update_simulation.h">
       <Filter>Simulation Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\Downloads\ProgramVariant.h">
+      <Filter>Arena &amp; Setup</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="atlsnd.lib" />
     <Library Include="image_transfer.lib" />
     <Library Include="strmbasd.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Downloads\plot_diagnostics.py">
+      <Filter>Diagnostic</Filter>
+    </None>
   </ItemGroup>
 </Project>

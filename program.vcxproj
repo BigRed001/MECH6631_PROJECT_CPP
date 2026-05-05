@@ -14,18 +14,18 @@
     <SccProjectName />
     <SccLocalPath />
     <ProjectGuid>{7E56BCE6-5C39-441D-9CAC-2739075FA2BC}</ProjectGuid>
-    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -165,6 +165,7 @@
     <ClCompile Include="Waypoint.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\Downloads\ProgramVariant.h" />
     <ClInclude Include="ArenaSetup.h" />
     <ClInclude Include="AStar.h" />
     <ClInclude Include="DebugVisualizer.h" />
@@ -189,6 +190,9 @@
     <ClInclude Include="vision.h" />
     <ClInclude Include="vision_simulation.h" />
     <ClInclude Include="Waypoint.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Downloads\plot_diagnostics.py" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
