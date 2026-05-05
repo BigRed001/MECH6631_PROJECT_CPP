@@ -20,11 +20,9 @@ Command WaypointFollower::follow(
     double desired = std::atan2(dy, dx);
     double err = angle_wrap(desired - theta);
 
-    // ⭐⭐⭐ MUCH STRONGER angular velocity
-    double w = k_ang * err;  // No scaling down!
+    double w = k_ang * err; 
     
-    // Cap at reasonable max
-    double w_max = k_ang * M_PI / 3;  // ±60° equivalent
+    double w_max = k_ang * M_PI / 3;  
     if (std::fabs(w) > w_max) {
         w = std::copysign(w_max, w);
     }
@@ -34,7 +32,6 @@ Command WaypointFollower::follow(
     if (distv > stop_dist) {
         double base_v = clamp(k_lin * (distv - stop_dist), 0.0, v_max);
         
-        // ⭐⭐⭐ SLOW DOWN when turning sharply
         if (std::fabs(err) > M_PI / 4) {  // > 45°
             v = 0.4 * v_max;  // Slow to 40% when turning hard
         } else if (std::fabs(err) > M_PI / 6) {  // > 30°
@@ -51,18 +48,16 @@ Command WaypointFollower::follow(
         }
     }
 
-    // ⭐⭐⭐ MUCH LARGER turning coefficient
-    double left = v - 0.5 * w;   // Increased from 0.15 to 0.5!
+    double left = v - 0.5 * w;  
     double right = v + 0.5 * w;
 
-    // Normalize if needed
     double m = std::max(1.0, std::max(std::fabs(left), std::fabs(right)));
     if (m > 1.0) {
         left /= m;
         right /= m;
     }
 
-    return { clamp(-left, -1.0, 1.0),   // Keep negation for servo
+    return { clamp(-left, -1.0, 1.0),   
              clamp(right, -1.0, 1.0),
              false };
 }
